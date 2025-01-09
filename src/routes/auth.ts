@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/User';
@@ -6,79 +6,70 @@ import User from '../models/User';
 const router = express.Router();
 
 // Register route
-router.post('/register', async (req, res) => {
+router.post('/register', async (req: Request, res: Response) => {
     try {
-        const { name, email, password } = req.body;
+        const { email, password } = req.body;
 
         // Check if user already exists
         const existingUser = await User.findOne({ email });
         if (existingUser) {
-            return res.status(400).json({ message: 'Bruger findes allerede med denne email' });
+            return res.status(400).json({ message: 'User already exists' });
         }
 
+        // Hash password
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
         // Create new user
-        const user = new User({
-            name,
+        const newUser = new User({
             email,
-            password
+            password: hashedPassword,
         });
 
-        await user.save();
+        // Save user to database
+        await newUser.save();
 
-        // Create token
-        const token = jwt.sign(
-            { userId: user._id },
-            process.env.JWT_SECRET || 'default-secret',
-            { expiresIn: process.env.JWT_EXPIRE || '30d' }
-        );
-
-        res.status(201).json({
-            token,
-            user: {
-                id: user._id,
-                name: user.name,
-                email: user.email
-            }
-        });
+        res.status(201).json({ message: 'User created successfully' });
     } catch (error) {
-        res.status(500).json({ message: 'Der skete en fejl ved registrering', error });
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
     }
 });
 
 // Login route
-router.post('/login', async (req, res) => {
+router.post('/login', async (req: Request, res: Response) => {
     try {
         const { email, password } = req.body;
 
-        // Find user
+        // Find user by email
         const user = await User.findOne({ email });
         if (!user) {
-            return res.status(401).json({ message: 'Ugyldig email eller adgangskode' });
+            return res.status(400).json({ message: 'Invalid credentials' });
         }
 
         // Check password
-        const isMatch = await user.comparePassword(password);
+        const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
-            return res.status(401).json({ message: 'Ugyldig email eller adgangskode' });
+            return res.status(400).json({ message: 'Invalid credentials' });
         }
 
-        // Create token
+        // Create and sign JWT token
+        const payload = {
+            user: {
+                id: user.id,
+            },
+        };
+
         const token = jwt.sign(
-            { userId: user._id },
-            process.env.JWT_SECRET || 'default-secret',
-            { expiresIn: process.env.JWT_EXPIRE || '30d' }
+            payload,
+            process.env.JWT_SECRET!, // Use non-null assertion operator
+            { expiresIn: '1h' }
         );
 
-        res.json({
-            token,
-            user: {
-                id: user._id,
-                name: user.name,
-                email: user.email
-            }
-        });
+        res.json({ token });
     } catch (error) {
-        res.status(500).json({ message: 'Der skete en fejl ved login', error });
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
     }
 });
 
