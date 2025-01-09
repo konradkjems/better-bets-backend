@@ -26,11 +26,14 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ok' });
 });
 
+<<<<<<< HEAD
 // Tilføj en route til roden (/)
 app.get('/', (req, res) => {
   res.json({ message: 'Velkommen til Better Bets API!' });
 });
 
+=======
+>>>>>>> b5e568b12d1e36603fff1517795c12f22e73d91b
 // Connect to database
 connectDB();
 
@@ -43,6 +46,9 @@ if (!process.env.VERCEL) {
 
 // Export for Vercel
 export default app;
+<<<<<<< HEAD
 
 
 // https://better-bets-frontend.vercel.app/
+=======
+>>>>>>> b5e568b12d1e36603fff1517795c12f22e73d91b
