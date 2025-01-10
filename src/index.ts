@@ -11,9 +11,14 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
+const productionOrigins = ['https://better-bets-api.vercel.app'];
+if (process.env.FRONTEND_URL) {
+    productionOrigins.push(process.env.FRONTEND_URL);
+}
+
 app.use(cors({
     origin: process.env.NODE_ENV === 'production' 
-        ? [process.env.FRONTEND_URL, 'https://din-nye-backend-url.vercel.app']
+        ? productionOrigins
         : ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:4173', 'https://better-bets-three.vercel.app/'],
     credentials: true
 }));
