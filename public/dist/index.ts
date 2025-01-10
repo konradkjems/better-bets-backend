@@ -11,14 +11,9 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
-const productionOrigins = ['https://better-bets-api.vercel.app'];
-if (process.env.FRONTEND_URL) {
-    productionOrigins.push(process.env.FRONTEND_URL);
-}
-
 app.use(cors({
     origin: process.env.NODE_ENV === 'production' 
-        ? productionOrigins
+        ? [process.env.FRONTEND_URL, 'https://din-nye-backend-url.vercel.app']
         : ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:4173', 'https://better-bets-three.vercel.app/'],
     credentials: true
 }));
@@ -28,14 +23,12 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 
 app.get('/api/health', (req, res) => {
-    res.setHeader('Content-Type', 'application/json');
     res.json({ status: 'ok' });
 });
 
 // Tilføj en route til roden (/)
 app.get('/', (req, res) => {
-    res.setHeader('Content-Type', 'application/json');
-    res.json({ message: 'Velkommen til Better Bets API!' });
+  res.json({ message: 'Velkommen til Better Bets API!' });
 });
 
 // Connect to database
